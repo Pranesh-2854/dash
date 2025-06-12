@@ -6,7 +6,8 @@ import subprocess
 import sys
 
 app = Flask(__name__)
-ONEDRIVE_PATH = r'C:/Users/prane/OneDrive/dashfiles/'
+ONEDRIVE_PATH = os.path.dirname(os.path.abspath(__file__))
+excel_path = os.path.join(ONEDRIVE_PATH, 'jira_issues.xlsx')
 
 data_cache = {
     'ip_test_details': None,
@@ -18,7 +19,6 @@ if not os.path.exists(ONEDRIVE_PATH):
 
 def get_ip_test_details_df():
     try:
-        excel_path = os.path.join(ONEDRIVE_PATH, 'jira_issues.xlsx')
         xls = pd.ExcelFile(excel_path)
         target_df = pd.read_excel(xls, 'Target')
         pass_df = pd.read_excel(xls, 'Pass')
