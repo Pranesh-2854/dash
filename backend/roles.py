@@ -131,12 +131,40 @@ def print_permissions(title, permissions):
     print("--- End ---\n")
 
 if __name__ == "__main__":
-    filter_id = "10231"
-    project_key = "DS"
-    role_name = "Administrator"
+    import sys
+
+    if len(sys.argv) < 5:
+        print("Usage: roles.py <add-viewer|remove-viewer|remove-all> <filter_id> <project_key> <role_name>", file=sys.stderr)
+        print("For remove-all, role_name can be any string (it will be ignored).", file=sys.stderr)
+        sys.exit(1)
+
+    action = sys.argv[1]
+    filter_id = sys.argv[2]
+    project_key = sys.argv[3]
+    role_name = sys.argv[4]
 
     project_id = get_project_id(project_key)
-    role_id = get_project_role_id(project_key, role_name)
+    if not project_id:
+        print("Invalid project", file=sys.stderr)
+        sys.exit(1)
 
-    if project_id and role_id:
+    if action == "add-viewer":
+        role_id = get_project_role_id(project_key, role_name)
+        if not role_id:
+            print("Invalid role", file=sys.stderr)
+            sys.exit(1)
         add_viewer_permission(filter_id, project_id, role_id)
+
+    elif action == "remove-viewer":
+        role_id = get_project_role_id(project_key, role_name)
+        if not role_id:
+            print("Invalid role", file=sys.stderr)
+            sys.exit(1)
+        remove_viewer_permission(filter_id, project_id, role_id)
+
+    elif action == "remove-all":
+        remove_all_viewers(filter_id)
+
+    else:
+        print("Unknown action", file=sys.stderr)
+        sys.exit(1)
