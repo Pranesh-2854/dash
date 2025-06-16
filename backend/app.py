@@ -163,11 +163,11 @@ def get_unresolved_testcases_for_ip(interface):
         })
     return jsonify(cases)
 
-@app.route('/refresh_jira')
+@app.route('/refresh-jira', methods=['POST'])
 def refresh_jira():
     try:
         subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), 'prog.py')], check=True)
-        return jsonify({"status": "refreshed"})
+        return jsonify({"status": "Jira data refreshed!"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
