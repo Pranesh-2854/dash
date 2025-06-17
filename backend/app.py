@@ -218,17 +218,18 @@ def api_add_role():
     filter_id = data.get('filter_id')
     project_key = data.get('project_key')
     role_name = data.get('role_name')
-    if not filter_id or not project_key or not role_name:
-        return jsonify({"status": "error", "message": "Filter ID, project key, and role name are required."}), 400
+    role_type = data.get('role_type')  # "viewer" or "editor"
+    if not filter_id or not project_key or not role_name or not role_type:
+        return jsonify({"status": "error", "message": "All fields are required."}), 400
     try:
         result = subprocess.run(
-            [sys.executable, os.path.join(os.path.dirname(__file__), 'roles.py'), "add-viewer", filter_id, project_key, role_name],
+            [sys.executable, os.path.join(os.path.dirname(__file__), 'roles.py'), "add", role_type, filter_id, project_key, role_name],
             capture_output=True, text=True
         )
         print("roles.py stdout:", result.stdout)
         print("roles.py stderr:", result.stderr)
         if result.returncode == 0:
-            return jsonify({"status": "success", "message": "Viewer role added!"})
+            return jsonify({"status": "success", "message": f"{role_type.capitalize()} role added!"})
         else:
             return jsonify({"status": "error", "message": result.stderr}), 500
     except Exception as e:
@@ -240,17 +241,18 @@ def api_remove_role():
     filter_id = data.get('filter_id')
     project_key = data.get('project_key')
     role_name = data.get('role_name')
-    if not filter_id or not project_key or not role_name:
-        return jsonify({"status": "error", "message": "Filter ID, project key, and role name are required."}), 400
+    role_type = data.get('role_type')  # "viewer" or "editor"
+    if not filter_id or not project_key or not role_name or not role_type:
+        return jsonify({"status": "error", "message": "All fields are required."}), 400
     try:
         result = subprocess.run(
-            [sys.executable, 'roles.py', 'remove-viewer', filter_id, project_key, role_name],
+            [sys.executable, os.path.join(os.path.dirname(__file__), 'roles.py'), "remove", role_type, filter_id, project_key, role_name],
             capture_output=True, text=True
         )
         print("roles.py stdout:", result.stdout)
         print("roles.py stderr:", result.stderr)
         if result.returncode == 0:
-            return jsonify({"status": "success", "message": "Viewer role removed!"})
+            return jsonify({"status": "success", "message": f"{role_type.capitalize()} role removed!"})
         else:
             return jsonify({"status": "error", "message": result.stderr}), 500
     except Exception as e:

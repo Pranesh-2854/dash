@@ -133,34 +133,54 @@ def print_permissions(title, permissions):
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) < 5:
-        print("Usage: roles.py <add-viewer|remove-viewer|remove-all> <filter_id> <project_key> <role_name>", file=sys.stderr)
-        print("For remove-all, role_name can be any string (it will be ignored).", file=sys.stderr)
+    if len(sys.argv) < 6 and sys.argv[1] != "remove-all":
+        print("Usage: roles.py <add|remove> <viewer|editor> <filter_id> <project_key> <role_name>", file=sys.stderr)
+        print("For remove-all: roles.py remove-all <filter_id> <project_key> <dummy>", file=sys.stderr)
         sys.exit(1)
 
-    action = sys.argv[1]
-    filter_id = sys.argv[2]
-    project_key = sys.argv[3]
-    role_name = sys.argv[4]
+    action = sys.argv[1]      
+    if action in ("add", "remove"):
+        role_type = sys.argv[2] 
+        filter_id = sys.argv[3]
+        project_key = sys.argv[4]
+        role_name = sys.argv[5]
+    elif action == "remove-all":
+        filter_id = sys.argv[2]
+        project_key = sys.argv[3]
+    else:
+        print("Unknown action", file=sys.stderr)
+        sys.exit(1)
 
     project_id = get_project_id(project_key)
     if not project_id:
         print("Invalid project", file=sys.stderr)
         sys.exit(1)
 
-    if action == "add-viewer":
+    if action == "add":
         role_id = get_project_role_id(project_key, role_name)
         if not role_id:
             print("Invalid role", file=sys.stderr)
             sys.exit(1)
-        add_viewer_permission(filter_id, project_id, role_id)
+        if role_type == "viewer":
+            add_viewer_permission(filter_id, project_id, role_id)
+        elif role_type == "editor":
+            add_editor_permission(filter_id, project_id, role_id)
+        else:
+            print("Invalid role type", file=sys.stderr)
+            sys.exit(1)
 
-    elif action == "remove-viewer":
+    elif action == "remove":
         role_id = get_project_role_id(project_key, role_name)
         if not role_id:
             print("Invalid role", file=sys.stderr)
             sys.exit(1)
-        remove_viewer_permission(filter_id, project_id, role_id)
+        if role_type == "viewer":
+            remove_viewer_permission(filter_id, project_id, role_id)
+        elif role_type == "editor":
+            remove_editor_permission(filter_id, project_id, role_id)
+        else:
+            print("Invalid role type", file=sys.stderr)
+            sys.exit(1)
 
     elif action == "remove-all":
         remove_all_viewers(filter_id)
