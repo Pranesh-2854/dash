@@ -218,6 +218,32 @@
   background-color: #2980b9;
 }
 
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px; 
+  margin-bottom: 5px;
+}
+
+.action-btn {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.action-btn:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
     @media (max-width: 700px) {
   .chart-container,
   .issues-box {
@@ -259,12 +285,14 @@
   </style>
 </head>
 <body>
-  <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px; gap: 18px;">
+  <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 6px; gap: 18px;">
   <a href="/" class="back-button">← Back to Dashboard</a>
-  <span id="refresh-status" style="color:#2980b9; font-weight:bold; min-width:160px; text-align:center; font-size:1.08em; margin-top:-20px"></span>
-  <button id="refresh-btn" class="refresh-btn">
-    Refresh Jira Data
-  </button>
+  <button id="refresh-btn" class="refresh-btn">Refresh Jira Data</button>
+  <button class="refresh-btn" onclick="window.location.href='func.html'">Filter & Role Actions</button>
+  <button class="refresh-btn" onclick="runStatusScript()">Run Status Script</button>
+</div>
+<div style="text-align: center; margin-bottom: 20px;">
+  <span id="refresh-status" style="color:#2980b9; font-weight:bold; min-width:160px; text-align:center; font-size:1.08em;"></span>
 </div>
   <h2 id="module-name"></h2>
   
@@ -535,17 +563,41 @@ function closeSidebar() {
 }
 
 document.getElementById('refresh-btn').onclick = function() {
-  const statusSpan = document.getElementById('refresh-status');
-  statusSpan.textContent = "Refreshing...";
-  fetch('/refresh_jira')
-    .then(res => res.json())
+  const status = document.getElementById('refresh-status');
+  status.textContent = "Refreshing Jira data...";
+  fetch('/refresh-jira', {method: 'POST'})
+    .then(r => r.json())
     .then(data => {
-      statusSpan.textContent = "Refreshed! Please reload the page to see updates.";
+      if (data.status === "Jira data refreshed!") {
+        status.textContent = "Jira data refreshed! Please reload.";
+      } else {
+        status.textContent = data.message || "Refresh failed.";
+      }
     })
     .catch(() => {
-      statusSpan.textContent = "Refresh failed!";
+      status.textContent = "Failed to refresh Jira data.";
     });
 };
+
+function runStatusScript() {
+  const statusElem = document.getElementById('refresh-status');
+  statusElem.textContent = "Changing status...";
+  statusElem.style.color = "#2980b9";
+  fetch('/api/run-status', {
+    method: 'POST'
+  })
+  .then(r => r.json())
+  .then(data => {
+    statusElem.textContent = data.status === "success"
+      ? "Status changed!"
+      : (data.message || "An error occurred.");
+    statusElem.style.color = data.status === "success" ? "#2e7d32" : "#c62828";
+  })
+  .catch(() => {
+    statusElem.textContent = "An error occurred.";
+    statusElem.style.color = "#c62828";
+  });
+}
 </script>
 </body>
 </html>

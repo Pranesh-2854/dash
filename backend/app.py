@@ -279,6 +279,25 @@ def api_remove_all_roles():
             return jsonify({"status": "error", "message": result.stderr}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/run-status', methods=['POST'])
+def api_run_status():
+    import subprocess
+    import sys
+    import os
+    try:
+        result = subprocess.run(
+            [sys.executable, os.path.join(os.path.dirname(__file__), 'status.py')],
+            capture_output=True, text=True
+        )
+        print("status.py stdout:", result.stdout)
+        print("status.py stderr:", result.stderr)
+        if result.returncode == 0:
+            return jsonify({"status": "success", "message": "Status script executed successfully!"})
+        else:
+            return jsonify({"status": "error", "message": result.stderr or 'Status script failed.'}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
     
 if __name__ == '__main__':
     app.run(debug=True,use_reloader=False)
