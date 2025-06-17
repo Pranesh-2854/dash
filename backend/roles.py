@@ -130,6 +130,19 @@ def print_permissions(title, permissions):
         print(perm)
     print("--- End ---\n")
 
+def get_filter_id_by_name(filter_name):
+    url = f"{BASE_URL}/filter/search?filterName={filter_name}"
+    response = requests.get(url, auth=AUTH, headers=HEADERS)
+    if response.status_code == 200:
+        filters = response.json().get("values", [])
+        for f in filters:
+            if f.get("name", "").lower() == filter_name.lower():
+                return str(f.get("id"))
+        print(f"[ERROR] Filter '{filter_name}' not found.")
+        return None
+    print(f"[ERROR] Filter search failed: {response.status_code} - {response.text}")
+    return None
+
 if __name__ == "__main__":
     import sys
 
@@ -140,12 +153,12 @@ if __name__ == "__main__":
 
     action = sys.argv[1]      
     if action in ("add", "remove"):
-        role_type = sys.argv[2] 
-        filter_id = sys.argv[3]
+        role_type = sys.argv[2]
+        filter_identifier = sys.argv[3]  
         project_key = sys.argv[4]
         role_name = sys.argv[5]
     elif action == "remove-all":
-        filter_id = sys.argv[2]
+        filter_identifier = sys.argv[2]
         project_key = sys.argv[3]
     else:
         print("Unknown action", file=sys.stderr)
@@ -155,6 +168,15 @@ if __name__ == "__main__":
     if not project_id:
         print("Invalid project", file=sys.stderr)
         sys.exit(1)
+
+    # Try to use as ID, else look up by name
+    if filter_identifier.isdigit():
+        filter_id = filter_identifier
+    else:
+        filter_id = get_filter_id_by_name(filter_identifier)
+        if not filter_id:
+            print("Invalid filter name", file=sys.stderr)
+            sys.exit(1)
 
     if action == "add":
         role_id = get_project_role_id(project_key, role_name)

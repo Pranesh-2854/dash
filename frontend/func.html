@@ -128,8 +128,8 @@ input[type="text"]:focus, select:focus {
       <button class="btn" onclick="createOrUpdateFilter()">Create/Update Filter</button>
       <h2 style="margin-top: 30px;">Delete Issues in Filter</h2>
       <div class="form-group">
-        <label for="delete-identifier">Filter ID or Issue Key</label>
-        <input type="text" id="delete-identifier" placeholder="Enter filter ID or issue key">
+        <label for="delete-identifier">Filter Name/ID or Issue Key</label>
+        <input type="text" id="delete-identifier" placeholder="Enter filter name or ID or issue key">
       </div>
       <button class="btn" onclick="deleteIssues()">Delete Issues</button>
     </div>
@@ -138,14 +138,13 @@ input[type="text"]:focus, select:focus {
       <h2>Jira Role Actions</h2>
       <div id="role-status" class="result" style="text-align:center; min-height:18px;"></div>
       <div class="form-group">
-        <label for="role-filter-id">Filter ID</label>
-        <input type="text" id="role-filter-id" placeholder="Enter filter ID">
+        <label for="role-filter-id">Filter Name or ID</label>
+        <input type="text" id="role-filter-id" placeholder="Enter filter name or ID">
       </div>
       <div class="form-group">
         <label for="role-project-key">Project Key</label>
         <select id="role-project-key" onchange="fetchRolesForProject()">
           <option value="">Select a project</option>
-          <!-- Project keys will be populated here -->
         </select>
       </div>
       <div class="form-group">
@@ -196,7 +195,7 @@ input[type="text"]:focus, select:focus {
       fetch('/api/remove-issues', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({filter_id: identifier}) // or {issue_key: identifier}
+        body: JSON.stringify({filter_id: identifier}) 
       })
       .then(r => r.json())
       .then(data => {

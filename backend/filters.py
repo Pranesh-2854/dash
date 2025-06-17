@@ -76,19 +76,12 @@ if __name__ == "__main__":
         identifier = sys.argv[sys.argv.index('--remove') + 1]
         if identifier.isdigit():
             filter_id = identifier
-            jql = get_filter_jql_by_id(filter_id)
-            if not jql:
-                print("Could not retrieve JQL for filter", file=sys.stderr)
+        elif '-' not in identifier:
+            filter_obj = get_filter_by_name(identifier)
+            if not filter_obj:
+                print(f"Filter with name '{identifier}' not found.", file=sys.stderr)
                 sys.exit(1)
-            issues = get_issues_for_jql(jql)
-            print(f"Found {len(issues)} issues to delete.")
-            for key in issues:
-                if delete_issue(key):
-                    print(f"Deleted {key}")
-                else:
-                    print(f"Failed to delete {key}", file=sys.stderr)
-            print("Done.")
-            sys.exit(0)
+            filter_id = str(filter_obj["id"])
         elif '-' in identifier:
             issue_key = identifier
             if delete_issue(issue_key):
@@ -98,8 +91,22 @@ if __name__ == "__main__":
                 print(f"Failed to delete {issue_key}", file=sys.stderr)
                 sys.exit(1)
         else:
-            print("Invalid identifier for deletion. Provide a filter ID (digits) or issue key (e.g., PROJ-123).", file=sys.stderr)
+            print("Invalid identifier for deletion. Provide a filter ID, filter name, or issue key (e.g., PROJ-123).", file=sys.stderr)
             sys.exit(1)
+
+        jql = get_filter_jql_by_id(filter_id)
+        if not jql:
+            print("Could not retrieve JQL for filter", file=sys.stderr)
+            sys.exit(1)
+        issues = get_issues_for_jql(jql)
+        print(f"Found {len(issues)} issues to delete.")
+        for key in issues:
+            if delete_issue(key):
+                print(f"Deleted {key}")
+            else:
+                print(f"Failed to delete {key}", file=sys.stderr)
+        print("Done.")
+        sys.exit(0)
     elif len(sys.argv) >= 3:
         name = sys.argv[1]
         jql = sys.argv[2]
