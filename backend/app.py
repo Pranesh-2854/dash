@@ -195,18 +195,19 @@ def api_create_filter():
 @app.route('/api/remove-issues', methods=['POST'])
 def api_remove_issues():
     data = request.get_json()
-    filter_id = data.get('filter_id')
-    if not filter_id:
-        return jsonify({"status": "error", "message": "Filter ID is required."}), 400
+    identifier = data.get('filter_id') or data.get('issue_key')
+    if not identifier:
+        return jsonify({"status": "error", "message": "Filter ID or Issue Key is required."}), 400
     try:
         result = subprocess.run(
-            [sys.executable, os.path.join(os.path.dirname(__file__), 'filters.py'), '--remove', filter_id],
+            [sys.executable, os.path.join(os.path.dirname(__file__), 'filters.py'), '--remove', identifier],
             capture_output=True, text=True
         )
         print("filters.py stdout:", result.stdout)
         print("filters.py stderr:", result.stderr)
         if result.returncode == 0:
-            return jsonify({"status": "success", "message": "All issues deleted!"})
+            msg = "Issue deleted!" if '-' in identifier else "All issues deleted!"
+            return jsonify({"status": "success", "message": msg})
         else:
             return jsonify({"status": "error", "message": result.stderr}), 500
     except Exception as e:
@@ -218,7 +219,7 @@ def api_add_role():
     filter_id = data.get('filter_id')
     project_key = data.get('project_key')
     role_name = data.get('role_name')
-    role_type = data.get('role_type')  # "viewer" or "editor"
+    role_type = data.get('role_type') 
     if not filter_id or not project_key or not role_name or not role_type:
         return jsonify({"status": "error", "message": "All fields are required."}), 400
     try:
@@ -241,7 +242,7 @@ def api_remove_role():
     filter_id = data.get('filter_id')
     project_key = data.get('project_key')
     role_name = data.get('role_name')
-    role_type = data.get('role_type')  # "viewer" or "editor"
+    role_type = data.get('role_type') 
     if not filter_id or not project_key or not role_name or not role_type:
         return jsonify({"status": "error", "message": "All fields are required."}), 400
     try:
@@ -266,7 +267,6 @@ def api_remove_all_roles():
     if not filter_id or not project_key:
         return jsonify({"status": "error", "message": "Filter ID and project key are required."}), 400
     try:
-        # roles.py expects a dummy role_name for remove-all
         result = subprocess.run(
             [sys.executable, os.path.join(os.path.dirname(__file__), 'roles.py'), "remove-all", filter_id, project_key, "dummy"],
             capture_output=True, text=True
@@ -298,6 +298,46 @@ def api_run_status():
             return jsonify({"status": "error", "message": result.stderr or 'Status script failed.'}), 500
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/project-roles', methods=['POST'])
+def api_project_roles():
+    import requests, os
+    data = request.get_json()
+    project_key = data.get('project_key')
+    if not project_key:
+        return jsonify({"status": "error", "message": "Project key required."}), 400
+
+    JIRA_DOMAIN = os.environ.get("JIRA_DOMAIN")
+    JIRA_EMAIL = os.environ.get("JIRA_EMAIL")
+    JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN")
+    BASE_URL = f"https://{JIRA_DOMAIN}/rest/api/3"
+    AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
+    HEADERS = {"Accept": "application/json"}
+
+    url = f"{BASE_URL}/project/{project_key}/role"
+    response = requests.get(url, auth=AUTH, headers=HEADERS)
+    if response.status_code != 200:
+        return jsonify({"status": "error", "message": "Could not fetch roles."}), 500
+
+    roles = list(response.json().keys())
+    return jsonify({"status": "success", "roles": roles})
+
+@app.route('/api/project-keys', methods=['GET'])
+def api_project_keys():
+    import requests, os
+    JIRA_DOMAIN = os.environ.get("JIRA_DOMAIN")
+    JIRA_EMAIL = os.environ.get("JIRA_EMAIL")
+    JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN")
+    BASE_URL = f"https://{JIRA_DOMAIN}/rest/api/3"
+    AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
+    HEADERS = {"Accept": "application/json"}
+    url = f"{BASE_URL}/project/search"
+    response = requests.get(url, auth=AUTH, headers=HEADERS)
+    if response.status_code != 200:
+        return jsonify({"status": "error", "message": "Could not fetch projects."}), 500
+    projects = response.json().get("values", [])
+    project_keys = [proj["key"] for proj in projects]
+    return jsonify({"status": "success", "project_keys": project_keys})
     
 if __name__ == '__main__':
     app.run(debug=True,use_reloader=False)

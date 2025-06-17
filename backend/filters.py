@@ -73,20 +73,33 @@ def create_or_update_filter(name, jql):
 
 if __name__ == "__main__":
     if '--remove' in sys.argv:
-        filter_id = sys.argv[sys.argv.index('--remove') + 1]
-        jql = get_filter_jql_by_id(filter_id)
-        if not jql:
-            print("Could not retrieve JQL for filter", file=sys.stderr)
-            sys.exit(1)
-        issues = get_issues_for_jql(jql)
-        print(f"Found {len(issues)} issues to delete.")
-        for key in issues:
-            if delete_issue(key):
-                print(f"Deleted {key}")
+        identifier = sys.argv[sys.argv.index('--remove') + 1]
+        if identifier.isdigit():
+            filter_id = identifier
+            jql = get_filter_jql_by_id(filter_id)
+            if not jql:
+                print("Could not retrieve JQL for filter", file=sys.stderr)
+                sys.exit(1)
+            issues = get_issues_for_jql(jql)
+            print(f"Found {len(issues)} issues to delete.")
+            for key in issues:
+                if delete_issue(key):
+                    print(f"Deleted {key}")
+                else:
+                    print(f"Failed to delete {key}", file=sys.stderr)
+            print("Done.")
+            sys.exit(0)
+        elif '-' in identifier:
+            issue_key = identifier
+            if delete_issue(issue_key):
+                print(f"Deleted {issue_key}")
+                sys.exit(0)
             else:
-                print(f"Failed to delete {key}", file=sys.stderr)
-        print("Done.")
-        sys.exit(0)
+                print(f"Failed to delete {issue_key}", file=sys.stderr)
+                sys.exit(1)
+        else:
+            print("Invalid identifier for deletion. Provide a filter ID (digits) or issue key (e.g., PROJ-123).", file=sys.stderr)
+            sys.exit(1)
     elif len(sys.argv) >= 3:
         name = sys.argv[1]
         jql = sys.argv[2]
