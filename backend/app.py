@@ -348,7 +348,6 @@ def read_excel():
 
 @app.route('/api/write-excel', methods=['POST'])
 def write_excel():
-    # Example: write a new DataFrame
     df = pd.DataFrame([{"col1": 1, "col2": 2}])
     df.to_excel(excel_path, index=False)
     return jsonify({"status": "success"})
