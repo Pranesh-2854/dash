@@ -46,7 +46,7 @@ def create_filter(name, jql):
     url = f"{BASE_URL}/filter"
     payload = {"name": name, "jql": jql, "favourite": False}
     response = requests.post(url, json=payload, auth=AUTH, headers=HEADERS)
-    if response.status_code == 201:
+    if response.status_code == 201 or response.status_code == 200:
         print("Filter created!")
         return True
     else:

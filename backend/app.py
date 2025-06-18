@@ -6,29 +6,30 @@ import subprocess
 import sys
 
 app = Flask(__name__)
-ONEDRIVE_PATH = r'C:/Users/prane/OneDrive/dashfiles/'
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+excel_path = os.path.join(BASE_DIR, "data.xlsx")
 
 data_cache = {
     'ip_test_details': None,
 }
 cache_lock = Lock()
 
-if not os.path.exists(ONEDRIVE_PATH):
-    raise FileNotFoundError(f"OneDrive path does not exist: {ONEDRIVE_PATH}")
-
 def get_ip_test_details_df():
     try:
-        excel_path = os.path.join(ONEDRIVE_PATH, 'jira_issues.xlsx')
         xls = pd.ExcelFile(excel_path)
         target_df = pd.read_excel(xls, 'Target')
         pass_df = pd.read_excel(xls, 'Pass')
         fail_df = pd.read_excel(xls, 'Fail')
         unresolved_df = pd.read_excel(xls, 'Unresolved')
+
         target_df['SheetType'] = 'Target'
         pass_df['SheetType'] = 'Pass'
         fail_df['SheetType'] = 'Fail'
         unresolved_df['SheetType'] = 'Unresolved'
+
         df = pd.concat([target_df, pass_df, fail_df], ignore_index=True)
+
         with cache_lock:
             data_cache['ip_test_details'] = df
             data_cache['unresolved'] = unresolved_df
@@ -41,6 +42,7 @@ def get_ip_test_details_df():
     except Exception as e:
         raise RuntimeError(str(e))
     return df, unresolved_df, None
+
 
 @app.route('/data/<module_name>')
 def get_module_data(module_name):
@@ -338,6 +340,18 @@ def api_project_keys():
     projects = response.json().get("values", [])
     project_keys = [proj["key"] for proj in projects]
     return jsonify({"status": "success", "project_keys": project_keys})
+
+@app.route('/api/read-excel')
+def read_excel():
+    df = pd.read_excel(excel_path)
+    return jsonify(df.to_dict(orient='records'))
+
+@app.route('/api/write-excel', methods=['POST'])
+def write_excel():
+    # Example: write a new DataFrame
+    df = pd.DataFrame([{"col1": 1, "col2": 2}])
+    df.to_excel(excel_path, index=False)
+    return jsonify({"status": "success"})
     
 if __name__ == '__main__':
     app.run(debug=True,use_reloader=False)

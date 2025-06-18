@@ -11,7 +11,7 @@ JIRA_EMAIL = os.environ.get("JIRA_EMAIL")
 JIRA_API_TOKEN = os.environ.get("JIRA_API_TOKEN")
 
 FILTER_IDS = {
-    "Target": 10033,  
+    "Target": 10033,
     "Pass": 10203,
     "Fail": 10204,
     "Unresolved": 10205
@@ -63,9 +63,9 @@ def fetch_issues_for_filter(filter_id):
     return issues
 
 def main():
-    onedrive_folder = "C:/Users/prane/OneDrive/Dashfiles"
-    main_file_path = f"{onedrive_folder}/jira_issues.xlsx"
-    with pd.ExcelWriter(main_file_path, engine='openpyxl') as writer:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    excel_path = os.path.join(base_dir, "data.xlsx")
+    with pd.ExcelWriter(excel_path, engine='openpyxl') as writer:
         for filter_type, filter_id in FILTER_IDS.items():
             issues = fetch_issues_for_filter(filter_id)
             if issues:
