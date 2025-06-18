@@ -51,7 +51,7 @@ def create_filter(name, jql):
         return True
     else:
         print("Failed to create filter:", response.status_code, response.text, file=sys.stderr)
-        return False
+        sys.exit(1)
 
 def update_filter_jql(filter_id, new_jql):
     url = f"{BASE_URL}/filter/{filter_id}"
