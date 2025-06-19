@@ -169,7 +169,6 @@ if __name__ == "__main__":
         print("Invalid project", file=sys.stderr)
         sys.exit(1)
 
-    # Try to use as ID, else look up by name
     if filter_identifier.isdigit():
         filter_id = filter_identifier
     else:
